@@ -2,14 +2,12 @@ package cnn;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CNN {
+public class NN {
     private List<Layer> layers;
-    private boolean verbose;
 
     // TODO implement "predict" and "train" methods
     // Current implementation is made for testing the different layers and structure of the network
-    public CNN() {
-        this.verbose = false;
+    public NN() {
         this.layers = new ArrayList<>();
     }
 
@@ -18,18 +16,18 @@ public class CNN {
     }
 
     public double[][][] forward(double[][][] input) {
-        if (this.verbose) {
+        if (Config.verbose()) {
             System.out.println("[NETWORK] Initiating forward pass through " + this.layers.size() + " layers");
         }
 
         double[][][] output = input;
         for (Layer layer : layers) {
-            if (layer.type == Layer.Type.DENSE && output[0][0].length != ((DenseLayer) layer).previousLayerSize) {
-                if (Config.verbose()) {
-                    System.out.println("[WARNING] Adjusting Dense layer input size from " + ((DenseLayer) layer).previousLayerSize + " to " + output[0][0].length);
-                }
-                ((DenseLayer) layer).init(output[0][0].length);
-            }
+            // if (layer.type == Layer.Type.DENSE && output[0][0].length != ((DenseLayer) layer).previousLayerSize) {
+            //     if (Config.verbose()) {
+            //         System.out.println("[WARNING] Adjusting Dense layer input size from " + ((DenseLayer) layer).previousLayerSize + " to " + output[0][0].length);
+            //     }
+            //     ((DenseLayer) layer).init(output[0][0].length);
+            // }
 
             output = layer.forward(output);
         }
@@ -65,9 +63,5 @@ public class CNN {
                     break;
             }
         }
-    }
-
-    public void setVerbose(boolean verbose) {
-        this.verbose = verbose;
     }
 }

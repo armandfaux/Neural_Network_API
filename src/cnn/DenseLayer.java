@@ -33,18 +33,15 @@ public class DenseLayer extends Layer {
         // Set all weights to random values from 0 to 1
         for (int i = 0; i < this.size; i++) {
             for (int j = 0; j < this.previousLayerSize; j++) {
-                // this.weights[i][j] = Math.random();
-                this.weights[i][j] = (Math.random() - 0.5) * 2;
+                this.weights[i][j] = Math.random();
             }
         }
     }
 
     public double[][][] forward(double[][][] input) {
-        System.out.println("[Dense Layer] Initiating forward pass");
-        // display();
-
         if (input[0][0].length != this.previousLayerSize) {
-            throw new IllegalArgumentException("Input size does not match the previous layer size.");
+            System.out.println("[WARNING] Adjusting layer size to " + input[0][0].length);
+            init(input[0][0].length);
         }
 
         // (can also use the existing member lastOutput instead)
@@ -76,33 +73,27 @@ public class DenseLayer extends Layer {
         return output;
     }
 
-    public double[][][] backward(double[][][] delta, double learningRate) {
-        System.out.println("[Dense Layer] delta");
-        Utils.displayFeatureMaps(delta);
-
+    public double[][][] backward(double[][][] delta_O, double learningRate) {
         double[][][] newDelta = new double[1][1][this.previousLayerSize];
 
         // For each neuron in this layer
         for (int neuron = 0; neuron < this.size; neuron++) {
             // Compute delta (error)
             double derivative = Activation.derivativeSigmoid(this.lastOutput[0][0][neuron]);
-            double delta_i = delta[0][0][neuron] * derivative;
+            double delta_I = delta_O[0][0][neuron] * derivative;
 
             for (int i = 0; i < this.previousLayerSize; i++) {
-                // Update weight using gradient descent
-                double gradient = delta_i * this.lastInput[0][0][i];
-                weights[neuron][i] -= learningRate * gradient;
-
                 // Accumulate delta to propagate to previous layer
-                newDelta[0][0][i] += delta_i * weights[neuron][i];
+                newDelta[0][0][i] += delta_I * weights[neuron][i];
+                
+                // Update weight using gradient descent
+                double gradient = delta_I * this.lastInput[0][0][i];
+                weights[neuron][i] -= learningRate * gradient;
             }
 
             // Update bias
-            biases[neuron] -= learningRate * delta_i;
+            biases[neuron] -= learningRate * delta_I;
         }
-
-        System.out.println("[Dense Layer] new delta");
-        Utils.displayFeatureMaps(newDelta);
 
         return newDelta;
     }
@@ -129,5 +120,21 @@ public class DenseLayer extends Layer {
         }
 
         System.out.println("======================================================\n");
+    }
+
+    public double[] getBiases() {
+        return biases;
+    }
+
+    public void setBiases(double[] biases) {
+        this.biases = biases;
+    }
+
+    public double[][] getWeights() {
+        return weights;
+    }
+
+    public void setWeights(double[][] weights) {
+        this.weights = weights;
     }
 }

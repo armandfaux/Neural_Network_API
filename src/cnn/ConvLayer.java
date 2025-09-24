@@ -58,10 +58,10 @@ class ConvLayer extends Layer {
     public double[][][] forward(double[][][] input) {
         int c_in = this.kernelChannels;
 
-        if (input.length != this.kernelChannels) {
-            System.out.println("[WARNING] input channels do not match kernel channels");
-            c_in = Math.min(this.kernelChannels, this.input_tensor.length);
-        }
+        // if (input.length != this.kernelChannels) {
+        //     System.out.println("[WARNING] input channels do not match kernel channels");
+        //     c_in = Math.min(this.kernelChannels, this.input_tensor.length);
+        // }
 
         // print input
         // for (double[][] featureMap : input) {
@@ -138,24 +138,9 @@ class ConvLayer extends Layer {
         int w_out = this.output_width;
 
         // In case of mismatch between input channels and kernel channels
-        if (c_in != this.kernelChannels) {
-            System.out.println("[WARNING] input channels do not match kernel channels");
-        }
-
-        System.out.println("Shapes :");
-        System.out.println("c_in =" + c_in);
-        System.out.println("h_in =" + h_in);
-        System.out.println("w_in =" + w_in);
-        System.out.println("c_out =" + c_out);
-        System.out.println("h_out =" + h_out);
-        System.out.println("w_out =" + w_out);
-
-        System.out.println("\n************");
-
-        // System.out.println("\nDelta_O:");
-        // Utils.displayFeatureMaps(delta_O);
-        // System.out.println("\ninput tensor:");
-        // Utils.displayFeatureMaps(this.input_tensor);
+        // if (c_in != this.kernelChannels) {
+        //     System.out.println("[WARNING] input channels do not match kernel channels");
+        // }
 
         // delta shapes (N = batch size) :
         // delta_I  (N)[c_in][h_in][w_in]
@@ -167,14 +152,10 @@ class ConvLayer extends Layer {
         double[][][][] delta_F =  new double[c_out][c_in][kernelHeight][kernelWidth]; // also called delta K in papers
 
         // Apply derivative on delta_O, to obtain pre-activation gradient (delta Z)
-
-        System.out.println("Delta_O before ReLU derivative:");
-        Utils.displayFeatureMaps(delta_O);
-
         for (int c = 0; c < c_out; c++) {
             for (int h = 0; h < h_out; h++) {
                 for (int w = 0; w < w_out; w++) {
-                    delta_O[c][h][w] = Activation.reluDerivative(delta_O[c][h][w]);
+                    delta_O[c][h][w] = Activation.derivativeReLU(delta_O[c][h][w]);
                 }
             }
         }
@@ -237,8 +218,6 @@ class ConvLayer extends Layer {
                     }
                 }
             }
-
-            Utils.displayFeatureMaps(delta_F[k]);
         }
 
         // OPTIMISER STEP : TO BE SEPARATED FROM BACKWARD LATER

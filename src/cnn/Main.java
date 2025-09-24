@@ -1,4 +1,5 @@
 package cnn;
+
 public class Main {
     public static void main(String[] args) {
         // Example usage
@@ -7,7 +8,7 @@ public class Main {
         // PoolLayer poolLayer = new PoolLayer(2, 2);
         FlattenLayer flattenLayer = new FlattenLayer();
         DenseLayer denseLayer = new DenseLayer(10, 2);
-        Config.setVerbose(true);
+        Config.setVerbose(false);
 
         double[][][] input = new double[1][3][3];
         for (int i = 0; i < 3; i++) {
@@ -17,14 +18,27 @@ public class Main {
         }
 
         // Create a CNN and add layers
-        CNN network = new CNN();
+        NN network = new NN();
         network.addLayer(convLayer);
         // network.addLayer(poolLayer);
         network.addLayer(flattenLayer);
         network.addLayer(denseLayer);
 
         // Forward pass
+
+        double[][][] expectedOutput = {{{1, 0, 0, 0, 0, 0, 0, 0, 0, 0}}};
+        double[][][] delta = new double[1][1][10];
+
         double[][][] cnnOutput = network.forward(input);
-        network.backward(cnnOutput);
+
+        for (int e = 0; e < 1000; e++) {
+            cnnOutput = network.forward(input);
+            for (int i = 0; i < 10; i++) {
+                delta[0][0][i] = cnnOutput[0][0][i] - expectedOutput[0][0][i];
+            }
+            network.backward(delta);
+        }
+
+        Utils.displayFeatureMaps(cnnOutput);
     }
 }

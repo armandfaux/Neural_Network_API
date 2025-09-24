@@ -4,6 +4,22 @@ public class FlattenLayer extends Layer {
     private int h_in;
     private int w_in;
 
+    // Converts 3D vector into 1D array
+    public double[] flatten_3d(double[][][] data) {
+        int shape[] = new int[data.length * data[0].length * data[0][0].length];
+        double[] flat_vector = new double[shape[0] * shape[1] * shape[2]];
+
+        for (int z = 0; z < shape[0]; z++) {
+            for (int y = 0; y < shape[1]; y++) {
+                for (int x = 0; x < shape[2]; x++) {
+                    flat_vector[z * shape[0] + y * shape[1] + x * shape[2]] = data[z][y][x];
+                }
+            }
+        }
+
+        return flat_vector;
+    }
+
     public double[][][] forward(double[][][] input) {
         this.c_in = input.length;
         this.h_in = input[0].length;
@@ -24,10 +40,6 @@ public class FlattenLayer extends Layer {
     }
 
     public double[][][] backward(double[][][] gradient, double learningRate) {
-
-        System.out.println("[Flatten Layer] delta");
-        Utils.displayFeatureMaps(gradient);
-
         int c_in = this.c_in;
         int h_in = this.h_in;
         int w_in = this.w_in;
@@ -42,9 +54,6 @@ public class FlattenLayer extends Layer {
                 }
             }
         }
-
-        System.out.println("[Flatten Layer] new delta");
-        Utils.displayFeatureMaps(new_delta);
 
         return new_delta;
     }

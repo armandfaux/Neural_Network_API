@@ -14,4 +14,4 @@ if %errorlevel% neq 0 (
 echo Build successful.
 
 cd .\bin
-java Main
+java cnn.Main

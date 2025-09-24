@@ -12,7 +12,7 @@ public class Activation {
         return Math.max(0, x);
     }
 
-    public static double reluDerivative(double x) {
+    public static double derivativeReLU(double x) {
         return (x > 0) ? 1.0 : 0.0;
     }
 
