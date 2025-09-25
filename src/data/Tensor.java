@@ -28,8 +28,10 @@ public class Tensor {
 
         // Compute actual index in 1D array
         int real_i = 0;
-        for (int d = 0; d < this.dim; d++) {
-            real_i += index[d] * this.shape[d];
+        int stride = 1;
+        for (int d = this.dim - 1; d >= 0; d--) {
+            real_i += index[d] * stride;
+            stride *= this.shape[d];
         }
 
         return this.data[real_i];
@@ -43,8 +45,10 @@ public class Tensor {
 
         // Compute actual index in 1D array
         int real_i = 0;
-        for (int d = 0; d < this.dim; d++) {
-            real_i += index[d] * this.shape[d];
+        int stride = 1;
+        for (int d = this.dim - 1; d >= 0; d--) {
+            real_i += index[d] * stride;
+            stride *= this.shape[d];
         }
 
         this.data[real_i] = value;
@@ -58,10 +62,13 @@ public class Tensor {
 
         // Compute actual index in 1D array
         int real_i = 0;
-        for (int d = 0; d < this.dim; d++) {
-            real_i += index[d] * this.shape[d];
+        int stride = 1;
+        for (int d = this.dim - 1; d >= 0; d--) {
+            real_i += index[d] * stride;
+            stride *= this.shape[d];
         }
 
+        System.out.println("Incrementing value " + this.data[real_i] + " by value: " + value);
         this.data[real_i] += value;
     }
 
