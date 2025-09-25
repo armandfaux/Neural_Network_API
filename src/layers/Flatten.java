@@ -1,12 +1,13 @@
-package cnn;
-public class FlattenLayer extends Layer {
+package layers;
+
+public class Flatten extends Layer {
     private int c_in;
     private int h_in;
     private int w_in;
 
     // Converts 3D vector into 1D array
-    public double[] flatten_3d(double[][][] data) {
-        int shape[] = new int[data.length * data[0].length * data[0][0].length];
+    public static double[] flatten_3d(double[][][] data) {
+        int[] shape = new int[]{data.length, data[0].length, data[0][0].length};
         double[] flat_vector = new double[shape[0] * shape[1] * shape[2]];
 
         for (int z = 0; z < shape[0]; z++) {

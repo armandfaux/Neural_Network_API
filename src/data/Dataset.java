@@ -1,4 +1,4 @@
-package cnn;
+package data;
 
 public class Dataset {
     public double[][][][] inputs;

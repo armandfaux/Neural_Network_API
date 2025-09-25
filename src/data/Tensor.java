@@ -1,4 +1,4 @@
-package cnn;
+package data;
 
 import java.util.function.Function;
 
@@ -65,6 +65,9 @@ public class Tensor {
         this.data[real_i] += value;
     }
 
+    public void set_data(double[] data) {
+        this.data = data;
+    }
 
     public void reshape(int[] shape) {
         this.shape = shape;
@@ -88,5 +91,9 @@ public class Tensor {
 
     public int size(int dim) {
         return this.shape[dim];
+    }
+
+    public int[] shape() {
+        return this.shape.clone();
     }
 }

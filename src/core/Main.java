@@ -1,13 +1,19 @@
-package cnn;
+package core;
+
+import layers.Conv;
+import layers.Dense;
+import layers.Flatten;
+import tools.Config;
+import tools.Utils;
 
 public class Main {
     public static void main(String[] args) {
         // Example usage
-        ConvLayer convLayer = new ConvLayer(1, 1, 2, 2);
+        Conv convLayer = new Conv(1, 1, 2, 2);
         // Backward pass to be implemented
         // PoolLayer poolLayer = new PoolLayer(2, 2);
-        FlattenLayer flattenLayer = new FlattenLayer();
-        DenseLayer denseLayer = new DenseLayer(10, 2);
+        Flatten flattenLayer = new Flatten();
+        Dense denseLayer = new Dense(10, 2);
         Config.setVerbose(false);
 
         double[][][] input = new double[1][3][3];

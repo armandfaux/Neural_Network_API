@@ -1,5 +1,9 @@
-package cnn;
-public class DenseLayer extends Layer {
+package layers;
+
+import tools.Activation;
+import tools.Config;
+
+public class Dense extends Layer {
     private int size;
     public int previousLayerSize;
 
@@ -9,7 +13,7 @@ public class DenseLayer extends Layer {
     private double[][][] lastOutput;
     private double[][][] lastInput;
 
-    public DenseLayer(int size, int previousLayerSize) {
+    public Dense(int size, int previousLayerSize) {
         this.size = size;
         init(previousLayerSize);
     }

@@ -1,6 +1,10 @@
-package cnn;
+package core;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import layers.Layer;
+import tools.Config;
 
 public class NN {
     private List<Layer> layers;

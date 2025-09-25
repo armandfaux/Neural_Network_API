@@ -4,7 +4,7 @@ echo Building project...
 if not exist bin mkdir bin
 
 REM Correctly compile with the JUnit jar in classpath
-javac -cp "lib\junit-platform-console-standalone-1.10.2.jar" -d bin src\cnn\*.java test\*.java
+javac -cp "lib\junit-platform-console-standalone-1.10.2.jar" -d bin src\core\*.java src\data\*.java src\layers\*.java src\tools\*.java test\*.java
 
 if %errorlevel% neq 0 (
     echo Compilation failed.
@@ -14,4 +14,4 @@ if %errorlevel% neq 0 (
 echo Build successful.
 
 cd .\bin
-java cnn.Main
+java core.Main

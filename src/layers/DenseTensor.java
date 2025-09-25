@@ -1,5 +1,10 @@
-package cnn;
-public class DenseLayerTensor {
+package layers;
+
+import data.Tensor;
+import tools.Activation;
+import tools.Config;
+
+public class DenseTensor extends LayerTensor {
     private int size;
     public int previousLayerSize;
 
@@ -9,7 +14,7 @@ public class DenseLayerTensor {
     private Tensor lastOutput; // 3D -> 1D
     private Tensor lastInput; // 3D -> 1D
 
-    public DenseLayerTensor(int size, int previousLayerSize) {
+    public DenseTensor(int size, int previousLayerSize) {
         this.size = size;
         init(previousLayerSize);
     }

@@ -1,4 +1,7 @@
-package cnn;
+package layers;
+
+import layers.Layer.Type;
+
 public class PoolLayer extends Layer {
     private int poolHeight;
     private int poolWidth;

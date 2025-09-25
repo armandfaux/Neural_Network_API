@@ -1,7 +1,11 @@
-package cnn;
+package layers;
 import java.util.Random;
 
-class ConvLayer extends Layer {
+import tools.Activation;
+import tools.Config;
+import tools.Utils;
+
+public class Conv extends Layer {
     public int kernelNum;
     private int kernelChannels;
     private int kernelHeight;
@@ -19,7 +23,7 @@ class ConvLayer extends Layer {
     // Cache for backpropagation
     public double[][][] input_tensor;
 
-    public ConvLayer(int kernelNum, int channels, int kernelHeight, int kernelWidth) {
+    public Conv(int kernelNum, int channels, int kernelHeight, int kernelWidth) {
         this.type = Type.CONV;
 
         this.kernelNum = kernelNum;
