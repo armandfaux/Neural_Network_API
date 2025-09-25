@@ -6,36 +6,43 @@ import tools.Config;
 
 public class DenseTensor extends LayerTensor {
     private int size;
-    public int previousLayerSize;
+    public int input_size; // Necessary to initialize weights
 
     private Tensor biases; // 1D
     private Tensor weights; // 2D
 
-    private Tensor lastOutput; // 3D -> 1D
-    private Tensor lastInput; // 3D -> 1D
+    private Tensor last_output; // 1D
+    private Tensor last_input; // 1D
 
-    public DenseTensor(int size, int previousLayerSize) {
+    private java.util.function.Function<Double, Double> activation_function;
+    private java.util.function.Function<Double, Double> activation_derivative;
+
+    public DenseTensor(int size, int input_size) {
         this.size = size;
-        init(previousLayerSize);
+        init(input_size);
+
+        this.type = Type.DENSE;
+        this.activation_function = Activation::sigmoid;
+        this.activation_derivative = Activation::derivativeSigmoid;
     }
 
-    public void init(int previousLayerSize) {
-        this.previousLayerSize = previousLayerSize;
+    public void init(int input_size) {
+        this.input_size = input_size;
 
         this.biases = new Tensor(
             new int[]{size}
         );
 
         this.weights = new Tensor(
-            new int[]{size, previousLayerSize}
+            new int[]{size, input_size}
         );
 
-        this.lastOutput = new Tensor(
+        this.last_output = new Tensor(
             new int[]{size}
         );
 
-        this.lastInput = new Tensor(
-            new int[]{previousLayerSize}
+        this.last_input = new Tensor(
+            new int[]{input_size}
         );
 
         biases.randomise();
@@ -43,12 +50,6 @@ public class DenseTensor extends LayerTensor {
     }
 
     public Tensor forward(Tensor input) {
-        // if (input[0][0].length != this.previousLayerSize) {
-        //     System.out.println("[WARNING] Adjusting layer size to " + input[0][0].length);
-        //     init(input[0][0].length);
-        // }
-
-        // (can also use the existing member lastOutput instead)
         Tensor output = new Tensor(
             new int[]{this.size}
         );
@@ -57,17 +58,17 @@ public class DenseTensor extends LayerTensor {
             double sum_weighted_input = 0;
 
             // Sum of every input * corresponding weight
-            for (int k = 0; k < this.previousLayerSize; k++) {
+            for (int k = 0; k < this.input_size; k++) {
                 sum_weighted_input += input.get(k) * this.weights.get(neuron, k);
             }
 
             // Add bias and activation function
-            double post_activation = Activation.sigmoid(sum_weighted_input + this.biases.get(neuron));
+            double post_activation = this.activation_function.apply(sum_weighted_input + this.biases.get(neuron));
             output.set(post_activation, neuron);
         }
 
-        this.lastInput = input;
-        this.lastOutput = output;
+        this.last_input = input;
+        this.last_output = output;
 
         if (Config.verbose()) {
             System.out.println("[Dense Layer] Output:");
@@ -80,35 +81,35 @@ public class DenseTensor extends LayerTensor {
         return output;
     }
 
-    public Tensor backward(Tensor delta_O, double learningRate) {
-        Tensor newDelta = new Tensor(new int[]{this.previousLayerSize});
+    public Tensor backward(Tensor delta_O, double learning_rate) {
+        Tensor newDelta = new Tensor(new int[]{this.input_size});
 
         // For each neuron in this layer
         for (int neuron = 0; neuron < this.size; neuron++) {
             // Compute delta (error)
-            double derivative = Activation.derivativeSigmoid(this.lastOutput.get(neuron));
+            double derivative = this.activation_derivative.apply(this.last_output.get(neuron));
             double delta_I = delta_O.get(neuron) * derivative;
 
-            for (int i = 0; i < this.previousLayerSize; i++) {
+            for (int i = 0; i < this.input_size; i++) {
                 // Accumulate delta to propagate to previous layer
                 newDelta.inc(delta_I * weights.get(neuron, i), i);
                 
                 // Update weight using gradient descent
-                double gradient = delta_I * this.lastInput.get(i);
+                double gradient = delta_I * this.last_input.get(i);
                 
                 // weights[neuron][i] -= learningRate * gradient; // OLD IMPLEMENTATION
-                weights.inc(learningRate * gradient * -1, neuron, i);
+                weights.inc(learning_rate * gradient * -1, neuron, i);
             }
 
             // Update bias
-            biases.inc(learningRate * delta_I * -1, neuron);
+            biases.inc(learning_rate * delta_I * -1, neuron);
         }
 
         return newDelta;
     }
 
     public Tensor getLastOutput() {
-        return lastOutput;
+        return last_output;
     }
 
     public void display() {
