@@ -9,15 +9,41 @@ public class Tensor {
     private int dim;
 
     public Tensor(int[] shape) {
-        this.data = new double[0];
+
+        // TODO CHECK NEGATIVE SHAPE !!!!
+        int size = 1;
+        for (int s : shape) {
+            size *= s;
+        }
+
+        this.data = new double[size];
         this.shape = shape;
         this.dim = shape.length;
     }
 
-    public Tensor(double[] data, int[] shape) {
+    public Tensor(int[] shape, double[] data) {
         this.data = data;
         this.shape = shape;
         this.dim = shape.length;
+    }
+
+    public void display() {
+        System.out.print("Tensor shape: [");
+        for (int i = 0; i < shape.length; i++) {
+            System.out.print(shape[i]);
+            if (i < shape.length - 1) {
+                System.out.print(", ");
+            }
+        }
+        System.out.println("]");
+        System.out.print("Data: [");
+        for (int i = 0; i < data.length; i++) {
+            System.out.print(data[i]);
+            if (i < data.length - 1) {
+                System.out.print(", ");
+            }
+        }
+        System.out.println("]");
     }
 
     // Return target element at data[index[0]][index[1]] etc...
@@ -68,7 +94,6 @@ public class Tensor {
             stride *= this.shape[d];
         }
 
-        System.out.println("Incrementing value " + this.data[real_i] + " by value: " + value);
         this.data[real_i] += value;
     }
 
@@ -81,8 +106,8 @@ public class Tensor {
     }
 
     public void randomise() {
-        for (int i = 0; i < data.length; i++) {
-            data[i] = Math.random();
+        for (int i = 0; i < this.data.length; i++) {
+            this.data[i] = (Math.random() - 0.5) * 2;
         }
     }
 
@@ -90,6 +115,18 @@ public class Tensor {
         for (int i = 0; i < data.length; i++) {
             data[i] = f.apply(data[i]);
         }
+    }
+
+    public Tensor subtract(Tensor other) {
+        if (other.data.length != this.data.length) {
+            throw new IllegalArgumentException("Tensor.subtract() - other tensor has different size");
+        }
+
+        Tensor result = new Tensor(this.shape, new double[this.data.length]);
+        for (int i = 0; i < data.length; i++) {
+            result.data[i] = this.data[i] - other.data[i];
+        }
+        return result;
     }
 
     public double[] raw_data() {

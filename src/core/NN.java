@@ -3,11 +3,13 @@ package core;
 import java.util.ArrayList;
 import java.util.List;
 
-import layers.Layer;
+import data.Tensor;
+import junit.framework.Test;
+import layers.LayerTensor;
 import tools.Config;
 
 public class NN {
-    private List<Layer> layers;
+    private List<LayerTensor> layers;
 
     // TODO implement "predict" and "train" methods
     // Current implementation is made for testing the different layers and structure of the network
@@ -15,17 +17,17 @@ public class NN {
         this.layers = new ArrayList<>();
     }
 
-    public void addLayer(Layer layer) {
+    public void addLayer(LayerTensor layer) {
         this.layers.add(layer);
     }
 
-    public double[][][] forward(double[][][] input) {
+    public Tensor forward(Tensor input) {
         if (Config.verbose()) {
             System.out.println("[NETWORK] Initiating forward pass through " + this.layers.size() + " layers");
         }
 
-        double[][][] output = input;
-        for (Layer layer : layers) {
+        Tensor output = input;
+        for (LayerTensor layer : layers) {
             // if (layer.type == Layer.Type.DENSE && output[0][0].length != ((DenseLayer) layer).previousLayerSize) {
             //     if (Config.verbose()) {
             //         System.out.println("[WARNING] Adjusting Dense layer input size from " + ((DenseLayer) layer).previousLayerSize + " to " + output[0][0].length);
@@ -38,8 +40,8 @@ public class NN {
         return output;
     }
 
-    public double[][][] backward(double[][][] gradient) {
-        double[][][] output = gradient;
+    public Tensor backward(Tensor gradient) {
+        Tensor output = gradient;
 
         for (int i = layers.size() - 1; i >= 0; i--) {
             output = layers.get(i).backward(output, 0.1);
@@ -48,17 +50,17 @@ public class NN {
     }
 
     public void listLayers() {
-        for (Layer l : this.layers) {
-            switch (l.type) {
-                case Layer.Type.DENSE:
+        for (LayerTensor l : this.layers) {
+            switch (l.getType()) {
+                case LayerTensor.Type.DENSE:
                     System.out.println("Dense layer");
                     break;
 
-                case Layer.Type.CONV:
+                case LayerTensor.Type.CONV:
                     System.out.println("Conv layer");
                     break;
 
-                case Layer.Type.POOLING:
+                case LayerTensor.Type.POOLING:
                     System.out.println("Pooling layer");
                     break;
             

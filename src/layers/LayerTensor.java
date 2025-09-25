@@ -3,7 +3,7 @@ package layers;
 import data.Tensor;
 
 public class LayerTensor {
-    enum Type {
+    public enum Type {
         CONV,
         DENSE,
         FLATTEN,
@@ -20,5 +20,9 @@ public class LayerTensor {
     public Tensor backward(Tensor delta, double learning_rate) {
         // This method should be overridden in subclasses
         throw new UnsupportedOperationException("Backward method not implemented in Layer class.");
+    }
+
+    public Type getType() {
+        return this.type;
     }
 }

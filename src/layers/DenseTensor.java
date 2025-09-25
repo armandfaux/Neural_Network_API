@@ -22,8 +22,8 @@ public class DenseTensor extends LayerTensor {
         init(input_size);
 
         this.type = Type.DENSE;
-        this.activation_function = Activation::sigmoid;
-        this.activation_derivative = Activation::derivativeSigmoid;
+        this.activation_function = Activation::relu;
+        this.activation_derivative = Activation::derivativeReLU;
     }
 
     public void init(int input_size) {
@@ -32,10 +32,12 @@ public class DenseTensor extends LayerTensor {
         this.biases = new Tensor(
             new int[]{size}
         );
+        this.biases.randomise();   
 
         this.weights = new Tensor(
             new int[]{size, input_size}
         );
+        this.weights.randomise();
 
         this.last_output = new Tensor(
             new int[]{size}
@@ -131,6 +133,23 @@ public class DenseTensor extends LayerTensor {
         // }
 
         System.out.println("======================================================\n");
+    }
+
+    // todo pair activation function with derivative
+    public java.util.function.Function<Double, Double> getActivationFunction() {
+        return activation_function;
+    }
+
+    public void setActivationFunction(java.util.function.Function<Double, Double> activation_function) {
+        this.activation_function = activation_function;
+    }
+
+    public java.util.function.Function<Double, Double> getActivationDerivative() {
+        return activation_derivative;
+    }
+
+    public void setActivationDerivative(java.util.function.Function<Double, Double> activation_derivative) {
+        this.activation_derivative = activation_derivative;
     }
 
     public Tensor getBiases() {

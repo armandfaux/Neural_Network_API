@@ -15,7 +15,7 @@ public class TensorTest {
         assertArrayEquals(raw_data, tensor.raw_data(), "Tensor data should be set properly");
 
         // Data + shape constructor
-        tensor = new data.Tensor(raw_data, new int[]{2, 3, 2});
+        tensor = new data.Tensor(new int[]{2, 3, 2}, raw_data);
         assertArrayEquals(raw_data, tensor.raw_data(), "Tensor data should be set properly");
     }
 
