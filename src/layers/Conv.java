@@ -31,6 +31,7 @@ public class Conv extends LayerTensor {
         this.type = Type.CONV;
 
         this.kernelNum = kernelNum;
+        this.kernelChannels = channels;
         this.kernelWidth = kernelWidth;
         this.kernelHeight = kernelHeight;
         this.stride = 1;
@@ -101,10 +102,10 @@ public class Conv extends LayerTensor {
         for (int k = 0; k < this.kernelNum; k++) {
 
             // Scan the input
-            for (int channel = 0; channel < c_in; channel++) {
-                for (int outputY = 0; outputY < h_out; outputY++) {
-                    for (int outputX = 0; outputX < w_out; outputX++) {
-                        double sum = 0.0;
+            for (int outputY = 0; outputY < h_out; outputY++) {
+                for (int outputX = 0; outputX < w_out; outputX++) {
+                    double sum = 0.0;
+                    for (int channel = 0; channel < c_in; channel++) {
 
                         // Compute product of kernel and input region
                         for (int ky = 0; ky < this.kernelHeight; ky++) {
@@ -114,9 +115,8 @@ public class Conv extends LayerTensor {
                                 sum += input.get(channel, inputY, inputX) * this.kernels.get(k, channel, ky, kx);
                             }
                         }
-
-                        output.set(Activation.relu(sum + this.biases.get(k)),k, outputY, outputX);
                     }
+                    output.set(Activation.relu(sum + this.biases.get(k)), k, outputY, outputX);
                 }
             }
         }
@@ -174,7 +174,7 @@ public class Conv extends LayerTensor {
                         for (int k_h = 0; k_h < this.kernelHeight; k_h++) {
                             for (int k_w = 0; k_w < this.kernelWidth; k_w++) {
                                 // 180° rotation of filter is like browsing values from the end: [h][w] -> [h][0] -> [0][w] -> [0][0]
-                                delta_I.set(delta_O.get(k, h, w) * this.kernels.get(k, c, this.kernelHeight - k_h - 1, this.kernelWidth - k_w - 1),
+                                delta_I.inc(delta_O.get(k, h, w) * this.kernels.get(k, c, this.kernelHeight - k_h - 1, this.kernelWidth - k_w - 1),
                                     c, h + k_h, w + k_w
                                 );
                                 
