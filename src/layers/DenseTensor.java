@@ -6,7 +6,7 @@ import tools.Config;
 
 public class DenseTensor extends LayerTensor {
     private int size;
-    public int input_size; // Necessary to initialize weights
+    private int input_size; // Necessary to initialize weights
 
     private Tensor biases; // 1D
     private Tensor weights; // 2D
@@ -84,22 +84,21 @@ public class DenseTensor extends LayerTensor {
     }
 
     public Tensor backward(Tensor delta_O, double learning_rate) {
-        Tensor newDelta = new Tensor(new int[]{this.input_size});
+        Tensor new_delta = new Tensor(new int[]{this.input_size});
 
         // For each neuron in this layer
         for (int neuron = 0; neuron < this.size; neuron++) {
             // Compute delta (error)
+            // delta_I = delta_O * derivative(last_output)
             double derivative = this.activation_derivative.apply(this.last_output.get(neuron));
             double delta_I = delta_O.get(neuron) * derivative;
 
             for (int i = 0; i < this.input_size; i++) {
                 // Accumulate delta to propagate to previous layer
-                newDelta.inc(delta_I * weights.get(neuron, i), i);
+                new_delta.inc(delta_I * weights.get(neuron, i), i);
                 
                 // Update weight using gradient descent
                 double gradient = delta_I * this.last_input.get(i);
-                
-                // weights[neuron][i] -= learningRate * gradient; // OLD IMPLEMENTATION
                 weights.inc(learning_rate * gradient * -1, neuron, i);
             }
 
@@ -107,35 +106,13 @@ public class DenseTensor extends LayerTensor {
             biases.inc(learning_rate * delta_I * -1, neuron);
         }
 
-        return newDelta;
+        return new_delta;
     }
 
     public Tensor getLastOutput() {
         return last_output;
     }
 
-    public void display() {
-        System.out.println("=== Layer Details ===");
-    
-        System.out.printf("%-10s %-15s %s\n", "Neuron", "Bias", "Weights");
-        System.out.println("------------------------------------------------------");
-    
-        // LEGACY
-        // for (int i = 0; i < biases.length; i++) {
-        //     // Print neuron index and bias
-        //     System.out.printf("%-10d %-15.6f ", i, biases[i]);
-    
-        //     // Print all weights for this neuron
-        //     for (int j = 0; j < weights[i].length; j++) {
-        //         System.out.printf("%.6f ", weights[i][j]);
-        //     }
-        //     System.out.println();
-        // }
-
-        System.out.println("======================================================\n");
-    }
-
-    // todo pair activation function with derivative
     public java.util.function.Function<Double, Double> getActivationFunction() {
         return activation_function;
     }
