@@ -1,5 +1,6 @@
 package data;
 
+import java.util.Random;
 import java.util.function.Function;
 
 // Defines a multi-dimensional array
@@ -25,6 +26,7 @@ public class Tensor {
         this.data = data;
         this.shape = shape;
         this.dim = shape.length;
+        this.init_zero();
     }
 
     public void display() {
@@ -105,9 +107,49 @@ public class Tensor {
         this.shape = shape;
     }
 
-    public void randomise() {
+    // Set all weights to zero
+    public void init_zero() {
         for (int i = 0; i < this.data.length; i++) {
-            this.data[i] = (Math.random() - 0.5) * 2;
+            this.data[i] = 0.0;
+        }
+    }
+
+    // Set all weights to given value
+    public void init_constant(double value) {
+        for (int i = 0; i < this.data.length; i++) {
+            this.data[i] = value;
+        }
+    }
+
+    // Uniform distribution between -0.5 and 0.5
+    public void init_random() {
+        for (int i = 0; i < this.data.length; i++) {
+            this.data[i] = (Math.random() - 0.5);
+        }
+    }
+
+    // Values drawn from normal distribution
+    public void init_normal() {
+        Random rand = new Random();
+        for (int i = 0; i < this.data.length; i++) {
+            this.data[i] = rand.nextGaussian() * 0.1;
+        }
+    }
+
+    // Xavier initialization, uniform distribution based on number of inputs and outputs
+    public void init_xavier(int in, int out) {
+        double x = Math.sqrt(6.0 / (in + out));
+        for (int i = 0; i < this.data.length; i++) {
+            this.data[i] = (Math.random() * 2 - 1) * x;
+        }
+    }
+
+    // He initialization, normal distribution based on number of inputs
+    public void init_he(int in) {
+        double std = Math.sqrt(2.0 / in);
+        Random rand = new Random();
+        for (int i = 0; i < this.data.length; i++) {
+            this.data[i] = rand.nextGaussian() * std;
         }
     }
 
