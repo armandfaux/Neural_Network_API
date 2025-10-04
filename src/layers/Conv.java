@@ -3,7 +3,6 @@ package layers;
 import data.Tensor;
 import tools.Activation;
 import tools.Config;
-import tools.Utils;
 
 // Weights initialization : HE
 // Biases initialization :  zero
@@ -26,6 +25,7 @@ public class Conv extends LayerTensor {
 
     // Cache for backpropagation
     public Tensor input_tensor;
+    public Tensor last_output;
 
     public Conv(int kernelNum, int channels, int kernelHeight, int kernelWidth) {
         this.type = Type.CONV;
@@ -126,6 +126,8 @@ public class Conv extends LayerTensor {
             output.display();
         }
 
+        this.last_output = output;
+
         return output;
     }
 
@@ -156,7 +158,15 @@ public class Conv extends LayerTensor {
         double[][][][] delta_F =  new double[c_out][c_in][kernelHeight][kernelWidth]; // also called delta K in papers
 
         // Apply derivative on delta_O, to obtain pre-activation gradient (delta Z)
-        delta_O.map(Activation::derivativeReLU);
+        for (int k = 0; k < c_out; k++) {
+            for (int h = 0; h < h_out; h++) {
+                for (int w = 0; w < w_out; w++) {
+                    double z = Activation.derivativeReLU(this.last_output.get(k, h, w)) * delta_O.get(k, h, w);
+                    delta_O.set(z, k, h, w);
+                }
+            }
+        }
+
         delta_I.init_zero();
 
         // Compute Delta I
@@ -263,6 +273,23 @@ public class Conv extends LayerTensor {
     }
 
     // Setters and getters for layer properties
+
+    public void setKernels(Tensor kernels) {
+        this.kernels = kernels;
+    }
+
+    public Tensor getKernels() {
+        return kernels;
+    }
+
+    public void setBiases(Tensor biases) {
+        this.biases = biases;
+    }
+
+    public Tensor getBiases() {
+        return biases;
+    }
+
     public void setStride(int stride) {
         this.stride = stride;
     }
