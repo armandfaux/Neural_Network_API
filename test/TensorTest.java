@@ -10,13 +10,13 @@ public class TensorTest {
     @Test
     public void tensor_init() {
         // Shape only constructor
-        data.Tensor tensor = new data.Tensor(new int[]{3, 2, 2});
-        tensor.set_data(raw_data);
-        assertArrayEquals(raw_data, tensor.raw_data(), "Tensor data should be set properly");
+        data.Tensor tensorA = new data.Tensor(new int[]{3, 2, 2});
+        tensorA.set_data(raw_data);
+        assertArrayEquals(raw_data, tensorA.raw_data(), "Tensor data should be set properly");
 
         // Data + shape constructor
-        tensor = new data.Tensor(new int[]{2, 3, 2}, raw_data);
-        assertArrayEquals(raw_data, tensor.raw_data(), "Tensor data should be set properly");
+        data.Tensor tensorB = new data.Tensor(new int[]{2, 3, 2}, raw_data);
+        assertArrayEquals(raw_data, tensorB.raw_data(), "Tensor data should match input array");
     }
 
     @Test

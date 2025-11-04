@@ -10,7 +10,6 @@ public class Tensor {
     private int dim;
 
     public Tensor(int[] shape) {
-
         // TODO CHECK NEGATIVE SHAPE !!!!
         int size = 1;
         for (int s : shape) {
@@ -23,14 +22,13 @@ public class Tensor {
     }
 
     public Tensor(int[] shape, double[] data) {
-        this.data = data;
+        this.data = data.clone();
         this.shape = shape;
         this.dim = shape.length;
-        this.init_zero();
     }
 
     public void display() {
-        System.out.print("Tensor shape: [");
+        System.out.print("-- Tensor shape: [");
         for (int i = 0; i < shape.length; i++) {
             System.out.print(shape[i]);
             if (i < shape.length - 1) {
@@ -38,14 +36,14 @@ public class Tensor {
             }
         }
         System.out.println("]");
-        System.out.print("Data: [");
+        System.out.print("[");
         for (int i = 0; i < data.length; i++) {
             System.out.print(data[i]);
             if (i < data.length - 1) {
                 System.out.print(", ");
             }
         }
-        System.out.println("]");
+        System.out.println("]\n---");
     }
 
     // Return target element at data[index[0]][index[1]] etc...

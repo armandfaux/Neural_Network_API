@@ -32,12 +32,10 @@ public class DenseTensor extends LayerTensor {
         this.biases = new Tensor(
             new int[]{size}
         );
-        this.biases.init_random();   
 
         this.weights = new Tensor(
             new int[]{size, input_size}
         );
-        this.weights.init_random();
 
         this.last_output = new Tensor(
             new int[]{size}
@@ -47,8 +45,8 @@ public class DenseTensor extends LayerTensor {
             new int[]{input_size}
         );
 
-        biases.init_random();
-        weights.init_random();
+        this.biases.init_normal();
+        this.weights.init_normal();
     }
 
     public Tensor forward(Tensor input) {
