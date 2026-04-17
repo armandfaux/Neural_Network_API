@@ -1,20 +1,28 @@
-package cnn;
-public class Layer {
-    enum Type {
-        DENSE,
+package layers;
+
+import data.Tensor;
+
+public class LayerTensor {
+    public enum Type {
         CONV,
+        DENSE,
+        FLATTEN,
         POOLING,
     }
 
     protected Type type;
 
-    public double[][][] forward(double[][][] input) {
+    public Tensor forward(Tensor input) {
         // This method should be overridden in subclasses
         throw new UnsupportedOperationException("Forward method not implemented in Layer class.");
     }
 
-    public double[][][] backward(double[][][] gradient, double learningRate) {
+    public Tensor backward(Tensor delta, double learning_rate) {
         // This method should be overridden in subclasses
         throw new UnsupportedOperationException("Backward method not implemented in Layer class.");
+    }
+
+    public Type getType() {
+        return this.type;
     }
 }
