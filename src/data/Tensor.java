@@ -1,5 +1,6 @@
 package data;
 
+import java.util.Arrays;
 import java.util.Random;
 import java.util.function.Function;
 
@@ -10,20 +11,28 @@ public class Tensor {
     private int dim;
 
     public Tensor(int[] shape) {
-        // TODO CHECK NEGATIVE SHAPE !!!!
-        int size = 1;
-        for (int s : shape) {
-            size *= s;
+        if (shape.length == 0) {
+            throw new IllegalArgumentException("Tensor.Tensor() - shape cannot be empty");
         }
 
+        for (int s : shape) {
+            if (s <= 0) {
+                throw new IllegalArgumentException("Tensor.Tensor() - non positive shape");
+            }
+        }
+
+        // Plus tard, size sera directement dans la classe Shape
+        int size = 1;
+        for (int s : shape) size *= s;
+
         this.data = new double[size];
-        this.shape = shape;
+        this.shape = shape.clone();
         this.dim = shape.length;
     }
 
     public Tensor(int[] shape, double[] data) {
         this.data = data.clone();
-        this.shape = shape;
+        this.shape = shape.clone();
         this.dim = shape.length;
     }
 
@@ -48,61 +57,50 @@ public class Tensor {
 
     // Return target element at data[index[0]][index[1]] etc...
     public double get(int... index) {
-        if (index.length != this.shape.length) {
-            throw new IllegalArgumentException("Tensor.get() - index doesn't match the shape");
-        }
-
-        // Compute actual index in 1D array
-        int real_i = 0;
-        int stride = 1;
-        for (int d = this.dim - 1; d >= 0; d--) {
-            real_i += index[d] * stride;
-            stride *= this.shape[d];
-        }
-
-        return this.data[real_i];
+        return this.data[flatIndex(index)];
     }
 
     // Set value of target element at data[index[0]][index[1]] etc...
     public void set(double value, int... index) {
-        if (index.length != this.shape.length) {
-            throw new IllegalArgumentException("Tensor.get() - index doesn't match the shape");
-        }
-
-        // Compute actual index in 1D array
-        int real_i = 0;
-        int stride = 1;
-        for (int d = this.dim - 1; d >= 0; d--) {
-            real_i += index[d] * stride;
-            stride *= this.shape[d];
-        }
-
-        this.data[real_i] = value;
+        this.data[flatIndex(index)] = value;
     }
 
     // Increment value to target element at data[index[0]][index[1]] etc...
     public void inc(double value, int... index) {
-        if (index.length != this.shape.length) {
-            throw new IllegalArgumentException("Tensor.get() - index doesn't match the shape");
-        }
-
-        // Compute actual index in 1D array
-        int real_i = 0;
-        int stride = 1;
-        for (int d = this.dim - 1; d >= 0; d--) {
-            real_i += index[d] * stride;
-            stride *= this.shape[d];
-        }
-
-        this.data[real_i] += value;
+        this.data[flatIndex(index)] += value;
     }
 
-    public void set_data(double[] data) {
-        this.data = data;
+    public void setData(double[] newData) {
+        if (newData.length != this.data.length) {
+            throw new IllegalArgumentException("Tensor.set_data() - data must have the same number of elements as the current shape");
+        }
+
+        this.data = newData.clone();
     }
 
-    public void reshape(int[] shape) {
-        this.shape = shape;
+    public void reshape(int[] newShape) {
+        if (newShape.length == 0) {
+            throw new IllegalArgumentException("Tensor.Tensor() - shape cannot be empty");
+        }
+
+        for (int s : newShape) {
+            if (s <= 0) {
+                throw new IllegalArgumentException("Tensor.Tensor() - non positive shape");
+            }
+        }
+
+        int currentSize = 1;
+        for (int s : shape) currentSize *= s;
+
+        int newSize = 1;
+        for (int s : newShape) newSize *= s;
+
+        if (currentSize != newSize) {
+            throw new IllegalArgumentException("Tensor.reshape() - new shape must have the same number of elements as the current shape");
+        }
+
+        this.dim = newShape.length;
+        this.shape = newShape.clone();
     }
 
     // Set all weights to zero
@@ -135,16 +133,16 @@ public class Tensor {
     }
 
     // Xavier initialization, uniform distribution based on number of inputs and outputs
-    public void init_xavier(int in, int out) {
-        double x = Math.sqrt(6.0 / (in + out));
+    public void init_xavier(int fanIn, int fanOut) {
+        double x = Math.sqrt(6.0 / (fanIn + fanOut));
         for (int i = 0; i < this.data.length; i++) {
             this.data[i] = (Math.random() * 2 - 1) * x;
         }
     }
 
     // He initialization, normal distribution based on number of inputs
-    public void init_he(int in) {
-        double std = Math.sqrt(2.0 / in);
+    public void init_he(int fanIn) {
+        double std = Math.sqrt(2.0 / fanIn);
         Random rand = new Random();
         for (int i = 0; i < this.data.length; i++) {
             this.data[i] = rand.nextGaussian() * std;
@@ -158,8 +156,8 @@ public class Tensor {
     }
 
     public Tensor subtract(Tensor other) {
-        if (other.data.length != this.data.length) {
-            throw new IllegalArgumentException("Tensor.subtract() - other tensor has different size");
+        if (!Arrays.equals(this.shape, other.shape)) {
+            throw new IllegalArgumentException("Tensor.subtract() - other tensor has different shape");
         }
 
         Tensor result = new Tensor(this.shape, new double[this.data.length]);
@@ -169,15 +167,42 @@ public class Tensor {
         return result;
     }
 
-    public double[] raw_data() {
+    public double[] raw() {
         return this.data.clone();
     }
 
     public int size(int dim) {
+        if (dim >= this.shape.length) {
+            throw new IllegalArgumentException("Tensor.size() - dimension out of bounds");
+        }
+
+        if (dim < 0) {
+            throw new IllegalArgumentException("Tensor.size() - negative dimension");
+        }
+
         return this.shape[dim];
     }
 
     public int[] shape() {
         return this.shape.clone();
+    }
+
+    private int flatIndex(int... index) {
+        if (index.length != this.shape.length) {
+            throw new IllegalArgumentException("Tensor - index doesn't match the shape");
+        }
+
+        int real_i = 0;
+        int stride = 1;
+        for (int d = this.dim - 1; d >= 0; d--) {
+            if (index[d] < 0 || index[d] >= this.shape[d]) {
+                throw new IllegalArgumentException("Tensor - index out of bounds");
+            }
+
+            real_i += index[d] * stride;
+            stride *= this.shape[d];
+        }
+
+        return real_i;
     }
 }
