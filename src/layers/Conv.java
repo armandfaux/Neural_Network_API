@@ -9,82 +9,82 @@ import tools.Config;
 // Activation :             ReLU
 
 public class Conv extends LayerTensor {
-    public int kernelNum;
-    private int kernelChannels;
+    public int kernelCount;
+    private int channelCount;
     private int kernelHeight;
     private int kernelWidth;
 
     private Tensor kernels; // [k][channel][h][w]
     private Tensor biases;
 
-    private int output_height;
-    private int output_width;
-
     private int stride;
+    
+    // Unique padding applied in all 4 directions
     private int padding;
 
     // Cache for backpropagation
-    public Tensor input_tensor;
-    public Tensor last_output;
+    public Tensor cachedInput;
+    public Tensor cachedOutput;
 
-    public Conv(int kernelNum, int channels, int kernelHeight, int kernelWidth) {
+    public Conv(int kernelCount, int channelCount, int kernelHeight, int kernelWidth) {
+        validateConstructorArguments(kernelCount, channelCount, kernelHeight, kernelWidth);
+
         this.type = Type.CONV;
 
-        this.kernelNum = kernelNum;
-        this.kernelChannels = channels;
+        this.kernelCount = kernelCount;
+        this.channelCount = channelCount;
         this.kernelWidth = kernelWidth;
         this.kernelHeight = kernelHeight;
+
         this.stride = 1;
         this.padding = 0;
 
-        this.output_height = 0;
-        this.output_width = 0;
-
-        this.input_tensor = new Tensor(new int[]{0, 0, 0});
+        this.cachedInput = null;
+        this.cachedOutput = null;
 
         // Each kernel (filter) is represented by a matrix of weights
         this.kernels = new Tensor(new int[]{
-            kernelNum, // Number of kernels
-            channels, // Input channels (c_in)
+            kernelCount, // Number of kernels
+            channelCount, // Input channels (c_in)
             kernelHeight,
             kernelWidth
         });
 
-        this.biases = new Tensor(new int[]{kernelNum});
+        this.biases = new Tensor(new int[]{kernelCount});
 
         init();
     }
 
+    private void validateConstructorArguments(int kernelCount, int channelCount, int kernelHeight, int kernelWidth) {
+        if (kernelCount <= 0) {
+            throw new IllegalArgumentException("Conv.Conv() - kernelCount must be positive");
+        }
+
+        if (channelCount <= 0) {
+            throw new IllegalArgumentException("Conv.Conv() - channelCount must be positive");
+        }
+
+        if (kernelHeight <= 0) {
+            throw new IllegalArgumentException("Conv.Conv() - kernelHeight must be positive");
+        }
+
+        if (kernelWidth <= 0) {
+            throw new IllegalArgumentException("Conv.Conv() - kernelWidth must be positive");
+        }
+    }
+
     private void init() {
-        this.kernels.init_he(this.kernelChannels * this.kernelHeight * this.kernelWidth);
+        this.kernels.init_he(this.channelCount * this.kernelHeight * this.kernelWidth);
         this.biases.init_zero();
     }
 
     public Tensor forward(Tensor input) {
-        int c_in = this.kernelChannels;
+        validateForwardInput(input);
 
-        // if (input.length != this.kernelChannels) {
-        //     System.out.println("[WARNING] input channels do not match kernel channels");
-        //     c_in = Math.min(this.kernelChannels, this.input_tensor.length);
-        // }
+        this.cachedInput = input;
 
-        // print input
-        // for (double[][] featureMap : input) {
-        //     for (double[] row : featureMap) {
-        //         for (double value : row) {
-        //             System.out.print(value + " ");
-        //         }
-        //         System.out.println();
-        //     }
-        //     System.out.println();
-        // }
-
-        this.input_tensor = input;
-        this.output_height = (input.shape()[1] - this.kernelHeight + 2 * this.padding) / this.stride + 1;
-        this.output_width = (input.shape()[2] - this.kernelWidth + 2 * this.padding) / this.stride + 1;
-
-        int h_out = this.output_height;
-        int w_out = this.output_width;
+        int h_out = (input.shape()[1] - this.kernelHeight + 2 * this.padding) / this.stride + 1;
+        int w_out = (input.shape()[2] - this.kernelWidth + 2 * this.padding) / this.stride + 1;
 
         if (Config.verbose()) {
             System.out.println("[Conv Layer] initiating forward pass");
@@ -92,27 +92,27 @@ public class Conv extends LayerTensor {
             System.out.println("outputWidth = " + w_out);
         }
 
-        if (h_out < 1 || w_out < 1 || this.kernelNum < 1) {
-            throw new IllegalArgumentException("Invalid output dimensions");
-        }
-
-        Tensor output = new Tensor(new int[]{this.kernelNum, h_out, w_out});
+        Tensor output = new Tensor(new int[]{this.kernelCount, h_out, w_out});
 
         // For each kernel
-        for (int k = 0; k < this.kernelNum; k++) {
+        for (int k = 0; k < this.kernelCount; k++) {
 
             // Scan the input
             for (int outputY = 0; outputY < h_out; outputY++) {
                 for (int outputX = 0; outputX < w_out; outputX++) {
                     double sum = 0.0;
-                    for (int channel = 0; channel < c_in; channel++) {
+                    for (int c = 0; c < this.channelCount; c++) {
 
                         // Compute product of kernel and input region
                         for (int ky = 0; ky < this.kernelHeight; ky++) {
                             for (int kx = 0; kx < this.kernelWidth; kx++) {
                                 int inputY = outputY * this.stride + ky - this.padding;
                                 int inputX = outputX * this.stride + kx - this.padding;
-                                sum += input.get(channel, inputY, inputX) * this.kernels.get(k, channel, ky, kx);
+
+                                // Ignore padding zeros
+                                if (inputY >= 0 && inputY < input.size(1) && inputX >= 0 && inputX < input.size(2)) {
+                                    sum += input.get(c, inputY, inputX) * this.kernels.get(k, c, ky, kx);
+                                }
                             }
                         }
                     }
@@ -126,7 +126,7 @@ public class Conv extends LayerTensor {
             output.display();
         }
 
-        this.last_output = output;
+        this.cachedOutput = output;
 
         return output;
     }
@@ -134,14 +134,14 @@ public class Conv extends LayerTensor {
     // To be implemented
     public Tensor backward(Tensor delta_O, double learningRate) {
         // input tensor shape (chanels, height width)
-        int c_in = this.input_tensor.shape()[0];
-        int h_in = this.input_tensor.shape()[1];
-        int w_in = this.input_tensor.shape()[2];
+        int c_in = this.cachedInput.shape()[0];
+        int h_in = this.cachedInput.shape()[1];
+        int w_in = this.cachedInput.shape()[2];
 
         // output tensor shape (chanels, height width)
-        int c_out = this.kernelNum;
-        int h_out = this.output_height;
-        int w_out = this.output_width;
+        int c_out = this.kernelCount;
+        int h_out = this.cachedOutput.shape()[1];
+        int w_out = this.cachedOutput.shape()[2];
 
         // In case of mismatch between input channels and kernel channels
         // if (c_in != this.kernelChannels) {
@@ -161,7 +161,7 @@ public class Conv extends LayerTensor {
         for (int k = 0; k < c_out; k++) {
             for (int h = 0; h < h_out; h++) {
                 for (int w = 0; w < w_out; w++) {
-                    double z = Activation.derivativeReLU(this.last_output.get(k, h, w)) * delta_O.get(k, h, w);
+                    double z = Activation.derivativeReLU(this.cachedOutput.get(k, h, w)) * delta_O.get(k, h, w);
                     delta_O.set(z, k, h, w);
                 }
             }
@@ -224,7 +224,7 @@ public class Conv extends LayerTensor {
                                 int in_h = h * this.stride + y - padding;
                                 int in_w = w * this.stride + x - padding;
 
-                                delta_F_sum += this.input_tensor.get(c, in_h, in_w) * delta_O.get(k, h, w);
+                                delta_F_sum += this.cachedInput.get(c, in_h, in_w) * delta_O.get(k, h, w);
                             }
                         }
                         delta_F[k][c][y][x] = delta_F_sum;
@@ -234,11 +234,11 @@ public class Conv extends LayerTensor {
         }
 
         // OPTIMISER STEP : TO BE SEPARATED FROM BACKWARD LATER
-        for (int k = 0; k < this.kernelNum; k++) {
+        for (int k = 0; k < this.kernelCount; k++) {
             // Substract gradient * learning rate
             this.biases.inc(-delta_B[k] * learningRate, k);
 
-            for (int c = 0; c < this.kernelChannels; c++) {
+            for (int c = 0; c < this.channelCount; c++) {
                 for (int y = 0; y < this.kernelHeight; y++) {
                     for (int x = 0; x < this.kernelWidth; x++) {
                         // Update kernels with gradient descent
@@ -251,6 +251,37 @@ public class Conv extends LayerTensor {
         }
 
         return delta_I;
+    }
+
+    private void validateForwardInput(Tensor input) {
+        if (input == null) {
+            throw new IllegalArgumentException("Conv.validateForwardInput() - input cannot be null");
+        }
+
+        if (input.shape().length != 3) {
+            throw new IllegalArgumentException("Conv.validateForwardInput() - input shape must be 3D");
+        }
+
+        if (input.size(0) != this.channelCount) {
+            throw new IllegalArgumentException("Conv.validateForwardInput() - input channels do not match kernel channels");
+        }
+
+        if (input.size(1) + 2 * padding < this.kernelHeight) {
+            throw new IllegalArgumentException("Conv.validateForwardInput() - input shape height is too small to perform a convolution");
+        }
+
+        if (input.size(2) + 2 * padding < this.kernelWidth) {
+            throw new IllegalArgumentException("Conv.validateForwardInput() - input shape width is too small to perform a convolution");
+        }
+
+        // Strict convolution
+        if ((input.size(1) - this.kernelHeight + 2 * this.padding) % this.stride != 0) {
+            throw new IllegalArgumentException("Conv.validateForwardInput() - stride does not evenly tile input height");
+        }
+        
+        if ((input.size(2) - this.kernelWidth + 2 * this.padding) % this.stride != 0) {
+            throw new IllegalArgumentException("Conv.validateForwardInput() - stride does not evenly tile input width");
+        }
     }
 
     public void displayKernels() {
@@ -275,6 +306,7 @@ public class Conv extends LayerTensor {
     // Setters and getters for layer properties
 
     public void setKernels(Tensor kernels) {
+        validateKernels(kernels);
         this.kernels = kernels;
     }
 
@@ -283,7 +315,41 @@ public class Conv extends LayerTensor {
     }
 
     public void setBiases(Tensor biases) {
+        validateBiases(biases);
         this.biases = biases;
+    }
+
+    private void validateKernels(Tensor kernels) {
+        if (kernels == null) {
+            throw new IllegalArgumentException("Conv.setKernels() - kernels cannot be null");
+        }
+
+        int[] shape = kernels.shape();
+
+        if (shape.length != 4) {
+            throw new IllegalArgumentException("Conv.setKernels() - kernels must have shape [kernelCount, channelCount, kernelHeight, kernelWidth]");
+        }
+
+        if (
+            shape[0] != this.kernelCount ||
+            shape[1] != this.channelCount ||
+            shape[2] != this.kernelHeight ||
+            shape[3] != this.kernelWidth
+        ) {
+            throw new IllegalArgumentException("Conv.setKernels() - kernels shape does not match layer configuration");
+        }
+    }
+
+    private void validateBiases(Tensor biases) {
+        if (biases == null) {
+            throw new IllegalArgumentException("Conv.setBiases() - biases cannot be null");
+        }
+
+        int[] shape = biases.shape();
+
+        if (shape.length != 1 || shape[0] != this.kernelCount) {
+            throw new IllegalArgumentException("Conv.setBiases() - biases must have shape [kernelCount]");
+        }
     }
 
     public Tensor getBiases() {
@@ -291,10 +357,18 @@ public class Conv extends LayerTensor {
     }
 
     public void setStride(int stride) {
+        if (stride < 1) {
+            throw new IllegalArgumentException("Conv.setStride() - stride must be positive");
+        }
+
         this.stride = stride;
     }
 
     public void setPadding(int padding) {
+        if (padding < 0) {
+            throw new IllegalArgumentException("Conv.setPadding() - padding cannot be negative");
+        }
+
         this.padding = padding;
     }
 
