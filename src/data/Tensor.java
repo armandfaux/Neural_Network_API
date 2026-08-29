@@ -171,16 +171,20 @@ public class Tensor {
         return this.data.clone();
     }
 
-    public int size(int dim) {
-        if (dim >= this.shape.length) {
+    public int size() {
+        return this.data.length;
+    }
+
+    public int size(int axis) {
+        if (axis >= this.shape.length) {
             throw new IllegalArgumentException("Tensor.size() - dimension out of bounds");
         }
 
-        if (dim < 0) {
+        if (axis < 0) {
             throw new IllegalArgumentException("Tensor.size() - negative dimension");
         }
 
-        return this.shape[dim];
+        return this.shape[axis];
     }
 
     public int[] shape() {
